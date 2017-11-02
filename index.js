@@ -17,19 +17,30 @@ const directories = [
   'src/doc/Model',
 ]
 
-main('../catalog-service/resources/swagger.yaml', 'catalog')
+main(getParameters(process.argv))
 
-function main (swaggerFile, service) {
-  const file = fs.readFileSync(swaggerFile, 'utf8')
+function getParameters (argv) {
+  let params = {}
+  let reg = /^--([a-z0-9\-_]*)/
+  argv.forEach((arg, index) => {
+    if (reg.test(arg)) {
+      params[arg.match(reg)[1]] = argv[index + 1]
+    }
+  })
+  return params;
+}
+
+function main (params) {
+  const file = fs.readFileSync(params.swagger, 'utf8')
   const swagger = yaml.safeLoad(file)
   cleanSourceDirectory()
-  createModels(swagger.definitions)
-  createApis(swagger.paths)
-  createService(swagger.host, swagger.basePath)
-  createApiIndex(swagger.paths, swagger.definitions)
-  createPackageJson(service)
-  createDoc(service, swagger)
-  copyStaticFiles(staticFiles)
+  createModels(swagger.definitions, params.output)
+  createApis(swagger.paths, params.output)
+  createService(swagger.host, swagger.basePath, params.output)
+  createApiIndex(swagger.paths, swagger.definitions, params.output)
+  createPackageJson(params.service, params.output)
+  createDoc(params.service, swagger, params.output)
+  copyStaticFiles(staticFiles, params.output)
 }
 
 function cleanSourceDirectory () {
@@ -47,10 +58,10 @@ function cleanSourceDirectory () {
   })
 }
 
-function createModels (definitions) {
+function createModels (definitions, output) {
   for (let definition in definitions) {
     const source = getModelSource(definition, definitions[definition])
-    fs.writeFileSync(`src/Model/${definition}.js`, source, 'utf8')
+    fs.writeFileSync(`${output}/Model/${definition}.js`, source, 'utf8')
   }
 }
 
@@ -62,11 +73,11 @@ function getModelSource (definition, model) {
   })
 }
 
-function createApis (paths) {
+function createApis (paths, output) {
   const apis = getApis(paths)
   for (let api in apis) {
     let source = getApiSource(api, apis[api])
-    fs.writeFileSync(`src/Api/${api}Api.js`, source, 'utf8')
+    fs.writeFileSync(`${output}/Api/${api}Api.js`, source, 'utf8')
   }
 }
 
@@ -113,18 +124,18 @@ function getApiSource (className, methods) {
   })
 }
 
-function createService (host, basePath) {
+function createService (host, basePath, output) {
   const template = fs.readFileSync('templates/Service.mustache', 'utf8')
   const rendered = Mustache.render(template, {
     host, basePath
   })
-  fs.writeFileSync('src/Api/Service.js', rendered, 'utf8')
+  fs.writeFileSync(`${output}/Api/Service.js`, rendered, 'utf8')
 }
 
-function createApiIndex (paths, definitions) {
+function createApiIndex (paths, definitions, output) {
   const apis = getApis(paths)
   const source = getApiIndexSource(apis, definitions)
-  fs.writeFileSync('src/index.js', source, 'utf8')
+  fs.writeFileSync(`${output}/index.js`, source, 'utf8')
 }
 
 function getApiIndexSource (apis, definitions) {
@@ -135,15 +146,15 @@ function getApiIndexSource (apis, definitions) {
   })
 }
 
-function createPackageJson (service) {
+function createPackageJson (service, output) {
   const template = fs.readFileSync('templates/package.mustache', 'utf8');
   const rendered = Mustache.render(template, {
     service
   })
-  fs.writeFileSync('src/package.json', rendered, 'utf8')
+  fs.writeFileSync(`${output}/package.json`, rendered, 'utf8')
 }
 
-function createDoc (service, swagger) {
+function createDoc (service, swagger, output) {
   // Create README.md
   const apis = getApis(swagger.paths)
   const models = []
@@ -154,11 +165,11 @@ function createDoc (service, swagger) {
     })
   }
 
-  createReadme(service, swagger.info, apis, models)
-  createApiDoc(service, apis)
+  createReadme(service, swagger.info, apis, models, output)
+  createApiDoc(service, apis, output)
 }
 
-function createReadme (service, infos, apis, models) {
+function createReadme (service, infos, apis, models, output) {
 
   let methods = []
 
@@ -180,7 +191,7 @@ function createReadme (service, infos, apis, models) {
     methods,
     models
   })
-  fs.writeFileSync('src/README.md', source, 'utf8')
+  fs.writeFileSync(`${output}/README.md`, source, 'utf8')
 }
 
 function getReadmeSource (infos) {
@@ -188,7 +199,7 @@ function getReadmeSource (infos) {
   return Mustache.render(template, infos)
 }
 
-function createApiDoc (service, apis) {
+function createApiDoc (service, apis, output) {
   for (let api in apis) {
     apis[api] = apis[api].map(api => {
       return {
@@ -197,7 +208,7 @@ function createApiDoc (service, apis) {
       }
     })
     const source = getApiDocSource(service, `${api}Api`, apis[api])
-    fs.writeFileSync(`src/doc/Api/${api}Api.md`, source, 'utf8')
+    fs.writeFileSync(`${output}/doc/Api/${api}Api.md`, source, 'utf8')
   }
 }
 
@@ -210,10 +221,10 @@ function getApiDocSource (service, className, api) {
   })
 }
 
-function copyStaticFiles (files) {
+function copyStaticFiles (files, output) {
   for (let source in files) {
     const dest = files[source]
-    fs.copyFileSync(source, `src/${dest}`)
+    fs.copyFileSync(source, `${output}/${dest}`)
   }
 }
 
