@@ -1,0 +1,50 @@
+# {{className}}
+
+Method | HTTP request | Description
+------------- | ------------- | -------------
+{{#methods}}
+[**{{operationId}}**]({{className}}.md#{{operationId}}) | **{{method}}** {{{path}}} | {{{summary}}}
+{{/methods}}
+
+
+{{#methods}}
+# **{{operationId}}**
+> {{operationId}}({{strParameters}})
+
+{{{summary}}}
+
+### Example
+```js
+import { {{className}} } from 'sdk-js-{{service}}-service'
+
+try {
+  let api = new {{className}}()
+  let response = api.{{operationId}}({{strParameters}})
+} catch (e) {
+  console.error(e)
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**uuid** | **string**|  |
+**body** | [**\Kinow\OrderService\Client\Model\AttachTaxRequest**](../Model/\Kinow\OrderService\Client\Model\AttachTaxRequest.md)|  |
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../../README.md#documentation-for-api-endpoints) [[Back to Model list]](../../README.md#documentation-for-models) [[Back to README]](../../README.md)
+{{/methods}}
+

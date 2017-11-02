@@ -1,0 +1,11 @@
+const Service = require('./Service')
+
+class {{className}}Api extends Service {
+{{#methods}}
+  {{operationId}} ({{{strParameters}}}) {
+    return this.{{method}}(`{{{path}}}`{{{strRestParameters}}})
+  }
+{{/methods}}
+}
+
+module.exports = {{className}}Api

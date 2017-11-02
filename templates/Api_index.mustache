@@ -1,0 +1,15 @@
+{{#models}}
+const {{.}} = require('./Model/{{.}}')
+{{/models}}
+{{#apis}}
+const {{.}}Api = require('./Api/{{.}}Api')
+{{/apis}}
+
+module.exports = {
+{{#models}}
+  {{.}},
+{{/models}}
+{{#apis}}
+  {{.}}Api,
+{{/apis}}
+}

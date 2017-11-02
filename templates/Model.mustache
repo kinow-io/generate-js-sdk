@@ -1,0 +1,14 @@
+const Model = require('./Model')
+
+class {{className}} extends Model {
+{{#properties}}
+  get {{.}} () {
+    return this.attributes.uuid
+  }
+  set {{.}} ({{.}}) {
+    this.attributes.{{.}} = {{.}}
+  }
+{{/properties}}
+}
+
+module.exports = {{className}}
