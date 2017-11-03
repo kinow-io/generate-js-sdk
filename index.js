@@ -5,9 +5,9 @@ const rimraf = require('rimraf')
 const path = require('path')
 
 const staticFiles = {
-  'templates/ModelClass.mustache': 'Model/Model.js',
-  'templates/ResponseError.mustache': 'Api/ResponseError.js',
-  'templates/.gitignore.mustache': '.gitignore'
+  [`${__dirname}/templates/ModelClass.mustache`]: 'Model/Model.js',
+  [`${__dirname}/templates/ResponseError.mustache`]: 'Api/ResponseError.js',
+  [`${__dirname}/templates/.gitignore.mustache`]: '.gitignore'
 }
 
 main(getParameters(process.argv))
@@ -60,7 +60,7 @@ function createModels (definitions, output) {
 }
 
 function getModelSource (definition, model) {
-  const template = fs.readFileSync('templates/Model.mustache', 'utf8')
+  const template = fs.readFileSync(`${__dirname}/templates/Model.mustache`, 'utf8')
   return Mustache.render(template, {
     className: definition,
     properties: Object.keys(model.properties).map(snakeToCamel)
@@ -111,7 +111,7 @@ function getApis (paths) {
 }
 
 function getApiSource (className, methods) {
-  const template = fs.readFileSync('templates/Api.mustache', 'utf8')
+  const template = fs.readFileSync(`${__dirname}/templates/Api.mustache`, 'utf8')
   return Mustache.render(template, {
     className,
     methods
@@ -119,7 +119,7 @@ function getApiSource (className, methods) {
 }
 
 function createService (host, basePath, output) {
-  const template = fs.readFileSync('templates/Service.mustache', 'utf8')
+  const template = fs.readFileSync(`${__dirname}/templates/Service.mustache`, 'utf8')
   const rendered = Mustache.render(template, {
     host, basePath
   })
@@ -133,7 +133,7 @@ function createApiIndex (paths, definitions, output) {
 }
 
 function getApiIndexSource (apis, definitions) {
-  const template = fs.readFileSync('templates/Api_index.mustache', 'utf8')
+  const template = fs.readFileSync(`${__dirname}/templates/Api_index.mustache`, 'utf8')
   return Mustache.render(template, {
     apis: Object.keys(apis),
     models: Object.keys(definitions)
@@ -141,7 +141,7 @@ function getApiIndexSource (apis, definitions) {
 }
 
 function createPackageJson (service, output) {
-  const template = fs.readFileSync('templates/package.mustache', 'utf8');
+  const template = fs.readFileSync(`${__dirname}/templates/package.mustache`, 'utf8');
   const rendered = Mustache.render(template, {
     service
   })
@@ -189,7 +189,7 @@ function createReadme (service, infos, apis, models, output) {
 }
 
 function getReadmeSource (infos) {
-  const template = fs.readFileSync('templates/README.mustache', 'utf8')
+  const template = fs.readFileSync(`${__dirname}/templates/README.mustache`, 'utf8')
   return Mustache.render(template, infos)
 }
 
@@ -207,7 +207,7 @@ function createApiDoc (service, apis, output) {
 }
 
 function getApiDocSource (service, className, api) {
-  const template = fs.readFileSync('templates/ApiDoc.mustache', 'utf8')
+  const template = fs.readFileSync(`${__dirname}/templates/ApiDoc.mustache`, 'utf8')
   return Mustache.render(template, {
     service,
     className,
