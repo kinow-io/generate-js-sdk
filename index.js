@@ -1,21 +1,14 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
 const Mustache = require('mustache')
+const rimraf = require('rimraf')
+const path = require('path')
 
 const staticFiles = {
   'templates/ModelClass.mustache': 'Model/Model.js',
   'templates/ResponseError.mustache': 'Api/ResponseError.js',
   'templates/.gitignore.mustache': '.gitignore'
 }
-
-const directories = [
-  'src',
-  'src/Api',
-  'src/Model',
-  'src/doc',
-  'src/doc/Api',
-  'src/doc/Model',
-]
 
 main(getParameters(process.argv))
 
@@ -33,7 +26,7 @@ function getParameters (argv) {
 function main (params) {
   const file = fs.readFileSync(params.swagger, 'utf8')
   const swagger = yaml.safeLoad(file)
-  cleanSourceDirectory()
+  rimraf.sync(params.output)
   createModels(swagger.definitions, params.output)
   createApis(swagger.paths, params.output)
   createService(swagger.host, swagger.basePath, params.output)
@@ -43,25 +36,26 @@ function main (params) {
   copyStaticFiles(staticFiles, params.output)
 }
 
-function cleanSourceDirectory () {
-  // Delete Api directory
-  directories.reverse().forEach(directory => {
-    if (fs.existsSync(directory)) {
-      const files = fs.readdirSync(directory)
-      files.forEach(file => fs.unlinkSync(`${directory}/${file}`))
-      fs.rmdirSync(directory)
-    }
-  })
-
-  directories.reverse().forEach(directory => {
+function createDirectory (directory) {
+  const dir = path.parse(directory)
+  if (!fs.existsSync(dir.dir) && !!dir.dir) {
+    createDirectory(dir.dir)
+  }
+  if (!fs.existsSync(directory)) {
     fs.mkdirSync(directory)
-  })
+  }
+}
+
+function writeFile (file, content) {
+  const dir = path.parse(file).dir
+  createDirectory(dir)
+  fs.writeFileSync(file, content, 'utf8')
 }
 
 function createModels (definitions, output) {
   for (let definition in definitions) {
     const source = getModelSource(definition, definitions[definition])
-    fs.writeFileSync(`${output}/Model/${definition}.js`, source, 'utf8')
+    writeFile(`${output}/Model/${definition}.js`, source)
   }
 }
 
@@ -77,7 +71,7 @@ function createApis (paths, output) {
   const apis = getApis(paths)
   for (let api in apis) {
     let source = getApiSource(api, apis[api])
-    fs.writeFileSync(`${output}/Api/${api}Api.js`, source, 'utf8')
+    writeFile(`${output}/Api/${api}Api.js`, source)
   }
 }
 
@@ -129,13 +123,13 @@ function createService (host, basePath, output) {
   const rendered = Mustache.render(template, {
     host, basePath
   })
-  fs.writeFileSync(`${output}/Api/Service.js`, rendered, 'utf8')
+  writeFile(`${output}/Api/Service.js`, rendered)
 }
 
 function createApiIndex (paths, definitions, output) {
   const apis = getApis(paths)
   const source = getApiIndexSource(apis, definitions)
-  fs.writeFileSync(`${output}/index.js`, source, 'utf8')
+  writeFile(`${output}/index.js`, source)
 }
 
 function getApiIndexSource (apis, definitions) {
@@ -151,7 +145,7 @@ function createPackageJson (service, output) {
   const rendered = Mustache.render(template, {
     service
   })
-  fs.writeFileSync(`${output}/package.json`, rendered, 'utf8')
+  writeFile(`${output}/package.json`, rendered)
 }
 
 function createDoc (service, swagger, output) {
@@ -191,7 +185,7 @@ function createReadme (service, infos, apis, models, output) {
     methods,
     models
   })
-  fs.writeFileSync(`${output}/README.md`, source, 'utf8')
+  writeFile(`${output}/README.md`, source)
 }
 
 function getReadmeSource (infos) {
@@ -208,7 +202,7 @@ function createApiDoc (service, apis, output) {
       }
     })
     const source = getApiDocSource(service, `${api}Api`, apis[api])
-    fs.writeFileSync(`${output}/doc/Api/${api}Api.md`, source, 'utf8')
+    writeFile(`${output}/doc/Api/${api}Api.md`, source)
   }
 }
 
